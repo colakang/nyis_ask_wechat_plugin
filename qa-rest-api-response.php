@@ -12,8 +12,8 @@ class qa_rest_api_response_page {
 	var $userslimit;
 	var $questionslimit;
 	var $answerslimit;
-	var $categorieslimit;
-	var $tagslimit;
+	var $categorieslimit;// by zijian
+	var $tagslimit;//zz by zijian
 
     /**
      * @param $request

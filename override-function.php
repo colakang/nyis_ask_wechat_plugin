@@ -161,15 +161,10 @@ function qa_log_in_external_user($source, $identifier, $fields)
  *  @return false
  */
 
-function qa_set_user_avatar($userid, $avatarUrl, $oldblobid=null)
+function qa_set_user_avatar($userid, $avatarUrl, $oldblobid)
 {
     require_once QA_INCLUDE_DIR.'util/image.php';
-
-        $rows = qa_db_query_sub('SELECT avatarblobid FROM ^users where userid = $', $userid);
-
-        while (($row = qa_db_read_one_assoc($rows, true)) !== null) {
-            $oldblobid = intval($row ['avatarblobid']);
-        }
+        xdebug_start_trace();
 
       $imagesize=@getimagesize($avatarUrl); // filename/ url not file content
 
@@ -187,13 +182,19 @@ function qa_set_user_avatar($userid, $avatarUrl, $oldblobid=null)
         require_once QA_INCLUDE_DIR.'app/blobs.php';
 
         $newblobid = qa_create_blob($imagedata, 'jpeg', null, $userid, null, qa_remote_ip_address());
+        //$flags = 4;
 
         if (isset($newblobid)) {
 
-            qa_db_query_sub('UPDATE ^users SET avatarblobid = $, avatarwidth = $, avatarheight = $ WHERE userid = $', $newblobid, $width, $height, $userid);
+            qa_db_query_sub('UPDATE ^users SET avatarblobid = $, avatarwidth = $, avatarheight = $  WHERE userid = $',
+                $newblobid, $width, $height, $userid);
 
-            if (isset($oldblobid))
+            //if (isset($oldblobid))
+
+            if($newblobid != $oldblobid) {
                 qa_delete_blob($oldblobid);
+            }
+            xdebug_stop_trace();
 //            qa_db_user_set_flag($userid, QA_USER_FLAGS_SHOW_AVATAR, true);
 //            qa_db_user_set_flag($userid, QA_USER_FLAGS_SHOW_GRAVATAR, false);
 

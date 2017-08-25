@@ -42,8 +42,7 @@ class wx_user_token {
 
         $result = $this->curl_get($this->wxLoginUrl);// $result is json format: openid, session_key, session_in
         $wxResult = json_decode($result,true); //$wxResult is array format, try to save in cache
-        //xdebug_start_trace();
-        //add an old token?
+
         $oldToken = $token;
 
         $tokenArr = array();
@@ -59,7 +58,7 @@ class wx_user_token {
         $tokenArr ['qauserid'] = $qauserid;
 
         return $tokenArr ;
-        //xdebug_stop_trace();
+
     }
 
 
@@ -143,6 +142,22 @@ class wx_user_token {
     }
 
     /**
+     * @param $qauserid
+     * @return $oldblobid
+     * Method To check if there is an existing avatarblobid
+     */
+    function getOldBlobid($qauserid){
+
+        $oldblobid = null;
+        $rows = qa_db_query_sub('SELECT avatarblobid FROM ^users where userid = $', $qauserid);
+
+        while (($row = qa_db_read_one_assoc($rows, true)) !== null) {
+
+            $oldblobid = $row ['avatarblobid'];
+        }
+        return $oldblobid;
+    }
+    /**
      * @param $content
      * @return mixed|string
      * method to update qa_users and qa_wxusers table when wechat user authurized detail user into
@@ -187,17 +202,19 @@ class wx_user_token {
             qa_db_query_sub('UPDATE ^users SET handle= $ WHERE userid = $', $nickName, $qauserid);
         }
 
+        $oldblobid = $this->getOldBlobid($qauserid);
+
         //to update avater in qauser table
-        if ($qauserid != null && $avatarUrl != null) {
+        if ($qauserid != null && $avatarUrl != null ) {
            require_once QA_INCLUDE_DIR.'app/users-edit.php';
 
-            qa_set_user_avatar($qauserid, $avatarUrl);
+
+            qa_set_user_avatar($qauserid, $avatarUrl,$oldblobid);
 
         }
 
         return json_encode($ret_val, JSON_PRETTY_PRINT);
    }
-
 
     /**
      * @param $wxResult
@@ -282,15 +299,13 @@ class wx_user_token {
      * return token in a sting
      */
     private function grantToken($wxResult,$oldToken){
-        //openid for token
-        xdebug_start_trace();
+
         $openid = $wxResult['openid'];
         //session_key for token
         $session_key = $wxResult['session_key'];
 
         $cachedValue = $this->prepareCachedValue($wxResult,$oldToken);
         $token = $this->saveToCache($cachedValue,$openid,$session_key);
-        xdebug_stop_trace();
         return $token;
 
     }
@@ -397,7 +412,7 @@ class wx_user_token {
      */
     private function tokenSalt(){
 
-        $token_salt = '';
+        $token_salt = 'ew98hu9ahqfaa9700eadvbsx';
         return $token_salt;
     }
 
